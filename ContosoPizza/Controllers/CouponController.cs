@@ -1,7 +1,6 @@
-using ContosoPizza.Data;
 using ContosoPizza.Models;
+using ContosoPizza.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace ContosoPizza.Controllers;
 
@@ -9,18 +8,70 @@ namespace ContosoPizza.Controllers;
 [Route("[controller]")]
 public class CouponController : ControllerBase
 {
-    PromotionsContext _context;
+    CouponService _service;
 
-    public CouponController(PromotionsContext context)
+    public CouponController(CouponService service)
     {
-        _context = context;
+        _service = service;
     }
 
     [HttpGet]
-    public IEnumerable<Coupon> Get()
+    public IEnumerable<Coupon> GetAll()
     {
-        return _context.Coupons
-            .AsNoTracking()
-            .ToList();
+        return _service.GetAll();
+    }
+
+    [HttpGet("{id}")]
+    public ActionResult<Coupon> GetById(int id)
+    {
+        var coupon = _service.GetById(id);
+
+        if (coupon is not null)
+        {
+            return coupon;
+        }
+        else
+        {
+            return NotFound();
+        }
+    }
+
+
+    [HttpPost]
+    public IActionResult Create(Coupon newCoupon)
+    {
+        var coupon = _service.Create(newCoupon);
+        return CreatedAtAction(nameof(GetById), new { id = coupon!.Id }, coupon);
+    }
+
+    [HttpPut("{id}")]
+    public IActionResult Update(int id, Coupon updatedCoupon)
+    {
+        var couponToUpdate = _service.GetById(id);
+        if (couponToUpdate is not null)
+        {
+            couponToUpdate = _service.Update(id, updatedCoupon);
+            return Ok(couponToUpdate);
+        }
+        else
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public IActionResult Delete(int id)
+    {
+        var coupon = _service.GetById(id);
+
+        if (coupon is not null)
+        {
+            _service.DeleteById(id);
+            return Ok();
+        }
+        else
+        {
+            return NotFound();
+        }
     }
 }
